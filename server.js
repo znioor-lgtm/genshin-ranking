@@ -3,6 +3,7 @@ const https = require('https');
 const fs = require('fs');
 const path = require('path');
 const { createClient } = require('@supabase/supabase-js');
+const cheerio = require('cheerio');
 
 const SUPABASE_URL = 'https://wwsgqhpxnaixahyatfqo.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind3c2dxaHB4bmFpeGFoeWF0ZnFvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwMzE2MTYsImV4cCI6MjA5ODYwNzYxNn0.iRhxGEWBp0YHpPzNJtHuscRoPt8ma-_yQae-5-xdRD8';
@@ -240,6 +241,16 @@ function handler(req, res) {
     return;
   }
 
+  if (url === '/api/banners' && req.method === 'GET') {
+    fetchPage('https://game8.co/games/Genshin-Impact/archives/305012').then(html => {
+      if (!html) { res.writeHead(502); res.end('{"error":"Falha ao buscar banners"}'); return; }
+      const banners = parseBanners(html);
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache, no-store, must-revalidate' });
+      res.end(JSON.stringify(banners));
+    });
+    return;
+  }
+
   if (url === '/' || url === '/index.html') {
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache, no-store, must-revalidate' });
     res.end(INDEX_HTML);
@@ -258,6 +269,90 @@ function handler(req, res) {
     res.writeHead(200, { 'Content-Type': MIME[ext] || 'application/octet-stream', 'Cache-Control': 'public, max-age=86400' });
     res.end(data);
   });
+}
+
+function fetchPage(url) {
+  return new Promise(resolve => {
+    https.get(url, { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }, timeout: 10000 }, res => {
+      let data = '';
+      res.on('data', c => data += c);
+      res.on('end', () => resolve(data));
+    }).on('error', () => resolve(null));
+  });
+}
+
+function parseBanners(html) {
+  const $ = cheerio.load(html);
+  const result = { current: [], next: [], lastUpdated: null };
+
+  // Get last updated date from the meta
+  $('time[datetime]').each((i, el) => {
+    const dt = $(el).attr('datetime');
+    if (dt && !result.lastUpdated) result.lastUpdated = dt;
+  });
+
+  // Look for the Current Banners section
+  const currentSection = $('#hl_2').parent();
+  if (currentSection.length) {
+    const tables = currentSection.nextAll('table');
+    // Process banner tables
+    tables.each((i, table) => {
+      const $table = $(table);
+      const rows = $table.find('tr');
+      if (rows.length < 2) return;
+      
+      const banner = { name: '', image: '', date: '', characters: [], isWeapon: false };
+      
+      // First row has banner image and name
+      const firstRow = $(rows[0]);
+      const bannerCell = $(firstRow.find('td')[0]);
+      const infoCell = $(firstRow.find('td')[1]);
+      
+      // Extract banner name
+      const nameLink = bannerCell.find('a');
+      banner.name = nameLink.text().trim() || 'Banner';
+      
+      // Extract banner image
+      const img = bannerCell.find('img[data-src]');
+      if (img.length) banner.image = img.attr('data-src');
+      
+      // Extract dates
+      const dateText = infoCell.text();
+      const dateMatch = dateText.match(/(\w+\s+\d+,\s*\d{4})\s*-\s*(\w+\s+\d+,\s*\d{4})/);
+      if (dateMatch) banner.date = `${dateMatch[1]} - ${dateMatch[2]}`;
+      
+      // Extract 5-star characters
+      const boldTexts = infoCell.find('b');
+      boldTexts.each((j, b) => {
+        if ($(b).text().trim() === '5 Star Rate-Up:') {
+          const charLinks = $(b).parent().find('a');
+          charLinks.each((k, a) => {
+            const name = $(a).text().trim();
+            const img2 = $(a).find('img[data-src]');
+            const icon = img2.length ? img2.attr('data-src') : '';
+            if (name && name !== 'Sandrone Image' && name !== 'Citlali Image' && name !== 'Beidou Image' && name !== 'Diona Image' && name !== 'Freminet Image') {
+              banner.characters.push({ name, icon, rarity: 5 });
+            }
+          });
+        }
+        if ($(b).text().trim() === '4 Star Rate-Up:') {
+          const charLinks = $(b).parent().find('a');
+          charLinks.each((k, a) => {
+            const name = $(a).text().trim();
+            const img2 = $(a).find('img[data-src]');
+            const icon = img2.length ? img2.attr('data-src') : '';
+            if (name && name !== 'Sandrone Image' && name !== 'Citlali Image' && name !== 'Beidou Image' && name !== 'Diona Image' && name !== 'Freminet Image') {
+              banner.characters.push({ name, icon, rarity: 4 });
+            }
+          });
+        }
+      });
+      
+      if (banner.name) result.current.push(banner);
+    });
+  }
+
+  return result;
 }
 
 const app = http.createServer(handler);
