@@ -76,7 +76,7 @@ function tryUrls(urls, index, res) {
   });
 }
 
-http.createServer((req, res) => {
+function handler(req, res) {
   const url = req.url.split('?')[0];
 
   if (url.startsWith('/wep-icon/')) {
@@ -175,6 +175,14 @@ http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': MIME[ext] || 'application/octet-stream', 'Cache-Control': cacheCtrl });
     res.end(data);
   });
-}).listen(PORT, '0.0.0.0', () => {
-  console.log(`GenshinRanking rodando em http://localhost:${PORT}`);
-});
+}
+
+const app = http.createServer(handler);
+
+if (require.main === module) {
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`GenshinRanking rodando em http://localhost:${PORT}`);
+  });
+}
+
+module.exports = app;
