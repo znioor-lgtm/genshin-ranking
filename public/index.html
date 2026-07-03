@@ -269,7 +269,7 @@ body{
 .chart-card h3{font-size:.78rem;font-weight:700;color:var(--gold-light);text-transform:uppercase;letter-spacing:1px;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid var(--border)}
 .chart-card h4{font-size:.68rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin:12px 0 8px}
 .bar-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
-.bar-label{font-size:.72rem;color:var(--text2);min-width:70px;display:flex;align-items:center;gap:4px;justify-content:flex-end;white-space:nowrap}
+.bar-label{font-size:.72rem;color:var(--text2);width:130px;display:flex;align-items:center;gap:4px;justify-content:flex-end;white-space:nowrap;flex-shrink:0}
 .bar-label img{width:13px;height:13px;flex-shrink:0}
 .bar-track{flex:1;height:22px;background:var(--bg);border-radius:4px;overflow:hidden;position:relative}
 .bar-fill{height:100%;border-radius:4px;transition:width .6s ease;position:relative}
@@ -291,7 +291,7 @@ body{
 @media(max-width:640px){
   .chart-grid{grid-template-columns:1fr}
   .overall-grid{grid-template-columns:1fr}
-  .bar-label{min-width:55px;font-size:.65rem}
+  .bar-label{width:100px;font-size:.65rem}
 }
 
 /* Hamburger */
@@ -998,7 +998,7 @@ body{
   function renderWeaponDist(data){
     if(!data.length)return '<div class="empty-chart">Nenhum personagem adicionado</div>';
     const counts={};WEAPONS.forEach(w=>counts[w]=0);
-    const WEP2={'Sword':'Espada','Claymore':'Espadão','Polearm':'Lança','Bow':'Arco','Catalyst':'Catalisador'};
+    const WEP2={'Sword':'Espada','Claymore':'Espadão','Polearm':'Lança','Bow':'Arco','Catalyst':'Catal.'};
     data.forEach(e=>{const wp=getCharWeapon(e.charId);if(counts[wp]!==undefined)counts[wp]++});
     const max=Math.max(...Object.values(counts),1);
     let html='';
