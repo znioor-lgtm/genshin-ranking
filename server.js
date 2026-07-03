@@ -318,19 +318,29 @@ function parseBanners(html) {
       const date = dateMatch ? `${dateMatch[1]} - ${dateMatch[2]}` : '';
 
       const characters = [];
-      infoCell.find('b').each((j, b) => {
-        const txt = $(b).text().trim();
+      infoCell.contents().each(function() {
+        if (this.type !== 'tag' || this.name !== 'b') return;
+        const $b = $(this);
+        const txt = $b.text().trim();
         let rarity = 0;
         if (txt === '5 Star Rate-Up:') rarity = 5;
         else if (txt === '4 Star Rate-Up:') rarity = 4;
         if (!rarity) return;
-        $(b).parent().find('a').each((k, a) => {
-          const name = $(a).text().trim();
-          if (!name || name.endsWith(' Image')) return;
-          const img2 = $(a).find('img[data-src], img[src]');
-          const icon = img2.length ? (img2.attr('data-src') || img2.attr('src') || '') : '';
-          characters.push({ name, icon, rarity });
-        });
+        // Find all links from this <b> until the next <b>
+        let $next = $b.next();
+        while ($next.length) {
+          if ($next.is('b')) break;
+          if ($next.is('a') || $next.find('a').length) {
+            const $a = $next.is('a') ? $next : $next.find('a').first();
+            const name = $a.text().trim();
+            if (name && !name.endsWith(' Image')) {
+              const img2 = $a.find('img[data-src], img[src]');
+              const icon = img2.length ? (img2.attr('data-src') || img2.attr('src') || '') : '';
+              characters.push({ name, icon, rarity });
+            }
+          }
+          $next = $next.next();
+        }
       });
 
       banners.push({ name: bannerName, image, date, characters });
