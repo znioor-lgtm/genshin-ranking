@@ -262,26 +262,33 @@ body{
 .theme-btn .theme-img{width:20px;height:20px;vertical-align:middle;display:inline-block}
 .main-wrapper{flex:1;margin-left:210px;padding:16px;display:flex;justify-content:center;min-height:100vh}
 
+/* Hamburger */
+.menu-btn{
+  display:none;position:fixed;top:12px;left:12px;z-index:600;
+  width:36px;height:36px;border-radius:var(--r-sm);
+  background:var(--bg2);border:1px solid var(--border);
+  color:var(--text);font-size:1.1rem;cursor:pointer;
+  align-items:center;justify-content:center;
+  transition:background .2s;
+}
+.menu-btn:hover{background:var(--card)}
+.sidebar-overlay{display:none;position:fixed;inset:0;z-index:490;background:rgba(0,0,0,.5)}
+
 @media(max-width:640px){
-  body{padding:0}
-  .sidebar{width:56px;padding:12px 0;align-items:center}
-  .sidebar-brand{padding:0 0 12px;flex-direction:column;gap:4px}
-  .sidebar-brand span{display:none}
-  .sidebar-nav{padding:0 4px;width:100%}
-  .nav-item{justify-content:center;padding:10px 4px}
-  .nav-text{display:none}
-  .sidebar-section{padding:12px 4px 0;width:100%}
-  .sec-label{display:none}
-  .profile-btn{justify-content:center;padding:8px 4px}
-  .profile-btn span:not(.avatar-dot){display:none}
-  .theme-btn{justify-content:center;padding:8px 4px}
-  .theme-btn .theme-text{display:none}
-  .main-wrapper{margin-left:56px;padding:10px}
+  .menu-btn{display:flex}
+  .sidebar-overlay{display:none}
+  .sidebar-overlay.open{display:block}
+  .sidebar{
+    transform:translateX(-100%);transition:transform .3s ease;
+    z-index:550;
+  }
+  .sidebar.open{transform:translateX(0)}
+  .main-wrapper{margin-left:0;padding:56px 10px 10px}
   .header h1{font-size:1.2rem}
   .form-grid{grid-template-columns:1fr}
   .btn-add{height:auto;padding:10px}
-  .card{padding:10px;gap:10px;flex-wrap:wrap}
-  .card-info{flex:1 1 calc(100% - 180px)}
+  .card{padding:10px;gap:10px}
+  .card-info{flex:1;min-width:0}
   .card-dps-badge{padding:4px 10px}
   .card-dps-badge .val{font-size:.8rem}
   .stats-bar{gap:8px}
@@ -319,6 +326,8 @@ body{
     </button>
   </div>
 </aside>
+<button class="menu-btn" id="menuBtn" title="Abrir menu">☰</button>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
 <div class="main-wrapper">
 <div class="container">
   <div class="header">
@@ -812,6 +821,23 @@ body{
   themeToggle.addEventListener('click',()=>{
     const cur=document.documentElement.getAttribute('data-theme')||'dark';
     applyTheme(cur==='dark'?'light':'dark');
+  });
+
+  // Mobile sidebar toggle
+  const menuBtn=document.getElementById('menuBtn');
+  const sidebarEl=document.querySelector('.sidebar');
+  const sidebarOverlay=document.getElementById('sidebarOverlay');
+  function toggleMenu(open){
+    sidebarEl.classList.toggle('open',open);
+    sidebarOverlay.classList.toggle('open',open);
+  }
+  menuBtn.addEventListener('click',()=>toggleMenu(true));
+  sidebarOverlay.addEventListener('click',()=>toggleMenu(false));
+  document.querySelectorAll('.profile-btn').forEach(b=>{
+    b.addEventListener('click',()=>toggleMenu(false));
+  });
+  document.querySelectorAll('.nav-item').forEach(b=>{
+    b.addEventListener('click',()=>toggleMenu(false));
   });
 
   state.ranking=loadRanking();
