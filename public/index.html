@@ -288,6 +288,12 @@ body{
 .profile-tag.erii{background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.2)}
 .empty-chart{text-align:center;padding:32px 16px;color:var(--text3);font-size:.78rem}
 
+/* Wishlist */
+.wish-priority{font-size:.6rem;font-weight:600;padding:2px 8px;border-radius:8px;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
+.wish-priority.high{background:rgba(239,68,68,.12);color:var(--red);border:1px solid rgba(239,68,68,.2)}
+.wish-priority.medium{background:rgba(250,204,21,.12);color:#eab308;border:1px solid rgba(250,204,21,.2)}
+.wish-priority.low{background:rgba(107,114,128,.12);color:var(--text3);border:1px solid rgba(107,114,128,.2)}
+
 @media(max-width:640px){
   .chart-grid{grid-template-columns:1fr}
   .overall-grid{grid-template-columns:1fr}
@@ -339,9 +345,14 @@ body{
     <a href="#" class="nav-item active" data-tab="ranking">
       <span class="nav-icon"><img src="https://cdn-icons-png.flaticon.com/512/8187/8187996.png" alt="" class="emoji-icon"></span>
       <span class="nav-text">Ranking</span>
+    </a>
     <a href="#" class="nav-item" data-tab="charts">
       <span class="nav-icon"><img src="https://cdn-icons-png.flaticon.com/512/4367/4367980.png" alt="" class="emoji-icon"></span>
       <span class="nav-text">Gráficos</span>
+    </a>
+    <a href="#" class="nav-item" data-tab="wishlist">
+      <span class="nav-icon"><img src="https://cdn-icons-png.flaticon.com/512/1828/1828884.png" alt="" class="emoji-icon"></span>
+      <span class="nav-text">Área de Desejos</span>
     </a>
   </nav>
   <div class="sidebar-section">
@@ -416,6 +427,46 @@ body{
       <p>Análise de personagens por elemento e arma</p>
     </div>
     <div id="chartsContent"></div>
+  </div>
+
+  <div id="wishlistTab" style="display:none">
+    <div class="header">
+      <h1>✦ <span>Área de Desejos</span></h1>
+      <p>Personagens que vocês estão guardando Gemas Essenciais</p>
+    </div>
+    <div class="form-card">
+      <form id="wishlistForm" autocomplete="off">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Personagem</label>
+            <div class="combo-wrap">
+              <div class="combo-input-wrap">
+                <span class="preview-icon" id="wishPreviewIcon"></span>
+                <input type="text" id="wishSearch" placeholder="Digite o nome do personagem..." spellcheck="false">
+                <button type="button" class="clear-btn" id="wishClearBtn">✕</button>
+              </div>
+              <div class="combo-dropdown" id="wishComboDropdown"></div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Prioridade</label>
+            <select id="wishPriority" style="background:var(--bg);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 12px;color:var(--text);font-size:.85rem;font-family:var(--font);outline:none;width:100%;cursor:pointer">
+              <option value="high">⭐⭐⭐ Alta</option>
+              <option value="medium" selected>⭐⭐ Média</option>
+              <option value="low">⭐ Baixa</option>
+            </select>
+          </div>
+          <button type="submit" class="btn-add">+ Desejar</button>
+        </div>
+      </form>
+    </div>
+    <div class="ranking-section">
+      <div class="ranking-header">
+        <h2><img src="https://cdn-icons-png.flaticon.com/512/1828/1828884.png" alt="" class="emoji-icon" style="width:18px;height:18px;vertical-align:middle"> Meus desejos</h2>
+        <span class="count" id="wishCount">0</span>
+      </div>
+      <div id="wishlistList"></div>
+    </div>
   </div>
 
   <div class="footer">Genshin Impact © HoYoverse · Made by AMORES &amp; Icons do Game8 <span style="opacity:.3">v3</span></div>
@@ -834,12 +885,14 @@ body{
     await saveRanking();
     currentProfile=profile;
     state.ranking=loadRanking();
+    wishState.list=loadWishlistLocal();
     renderRanking();
     syncFromServer();
     document.querySelectorAll('.profile-btn').forEach(b=>{
       b.classList.toggle('active',b.dataset.profile===profile);
     });
     if(chartsTab.style.display!=='none')renderCharts();
+    if(wishlistTab.style.display!=='none'){renderWishlist();syncWishlistFromServer()}
   }
 
   document.querySelectorAll('.profile-btn').forEach(btn=>{
@@ -890,6 +943,7 @@ body{
   // Tab switching
   const rankingTab=document.getElementById('rankingTab');
   const chartsTab=document.getElementById('chartsTab');
+  const wishlistTab=document.getElementById('wishlistTab');
   const chartsContent=document.getElementById('chartsContent');
   document.querySelectorAll('[data-tab]').forEach(el=>{
     el.addEventListener('click',e=>{
@@ -898,7 +952,9 @@ body{
       document.querySelectorAll('[data-tab]').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
       rankingTab.style.display=tab==='ranking'?'':'none';
       chartsTab.style.display=tab==='charts'?'':'none';
+      wishlistTab.style.display=tab==='wishlist'?'':'none';
       if(tab==='charts')renderCharts();
+      if(tab==='wishlist')renderWishlist();
     });
   });
 
@@ -1043,6 +1099,157 @@ body{
 
     return html;
   }
+
+  // Wishlist
+  const wishState={list:[],selectedSlug:''};
+  const wishSearch=document.getElementById('wishSearch');
+  const wishClearBtn=document.getElementById('wishClearBtn');
+  const wishComboDropdown=document.getElementById('wishComboDropdown');
+  const wishPreviewIcon=document.getElementById('wishPreviewIcon');
+  const wishPriority=document.getElementById('wishPriority');
+  const wishlistForm=document.getElementById('wishlistForm');
+  const wishlistList=document.getElementById('wishlistList');
+  const wishCount=document.getElementById('wishCount');
+
+  function loadWishlistLocal(){
+    const k='genshin_wish_'+currentProfile;
+    try{const r=localStorage.getItem(k);const d=r?JSON.parse(r):[];if(Array.isArray(d))return d;localStorage.removeItem(k);return[]}catch{localStorage.removeItem(k);return[]}
+  }
+  function saveWishlistLocal(){
+    localStorage.setItem('genshin_wish_'+currentProfile,JSON.stringify(wishState.list));
+  }
+  async function syncWishlistFromServer(){
+    try{
+      const r=await fetch('/api/wishlist?profile='+currentProfile,{headers:authHeaders()});
+      if(r.status===401){loginOverlay.classList.remove('hidden');sessionStorage.removeItem(PASSWORD_KEY);return}
+      const d=await r.json();
+      if(Array.isArray(d)){wishState.list=d;saveWishlistLocal();renderWishlist()}
+    }catch{}
+  }
+  async function saveWishlistServer(){
+    const r=await fetch('/api/wishlist?profile='+currentProfile,{method:'POST',headers:{...authHeaders(),'Content-Type':'application/json'},body:JSON.stringify(wishState.list)});
+    if(r.status===401){loginOverlay.classList.remove('hidden');sessionStorage.removeItem(PASSWORD_KEY)}
+  }
+
+  function renderWishlist(){
+    const list=wishState.list;
+    wishCount.textContent=list.length;
+    if(!list.length){
+      wishlistList.innerHTML=`<div class="empty-state"><div class="empty-icon"></div><p>Nenhum personagem desejado ainda.</p><div class="hint">Adicione personagens que quer pegar nos próximos banners!</div></div>`;
+      return;
+    }
+    let html='';
+    list.forEach((entry,index)=>{
+      const data=findCharData(entry.charId);
+      const name=entry.charName;
+      const element=data?data[2]:'None';
+      const weapon=data?data[3]:'';
+      const rarity=data?data[4]:5;
+      const starClass=rarity===4?'star4':'star5';
+      const firstLetter=name.charAt(0).toUpperCase();
+      const bgColor=ELE_COLORS[element]||'#8b8f9e';
+      const priority=entry.priority||'medium';
+      const priorityLabel=priority==='high'?'Alta':priority==='medium'?'Média':'Baixa';
+      html+=`<div class="card" style="animation-delay:${index*0.04}s">
+        <div class="card-rank"><span class="pos pos-gold">#${index+1}</span></div>
+        <div class="card-icon-wrap ${starClass}">
+          <img src="/icon/${entry.charId}" alt="${name}" loading="lazy"
+            onerror="this.onerror=null;this.parentElement.innerHTML=\`<div class='plh' style='color:${bgColor};border:2px solid ${bgColor}'>${firstLetter}</div>\`">
+        </div>
+        <div class="card-info">
+          <div class="top">
+            <span class="name">${name}</span>
+            <span class="ele-badge" style="color:${bgColor};border-color:${bgColor}">${esym(element)} ${element}</span>
+          </div>
+          <div class="bottom">
+            <span class="wish-priority ${priority}">${priorityLabel}</span>
+          </div>
+        </div>
+        <button class="card-delete" data-wish-id="${entry.id}">✕</button>
+      </div>`;
+    });
+    wishlistList.innerHTML=html;
+    wishlistList.querySelectorAll('[data-wish-id]').forEach(btn=>{
+      btn.addEventListener('click',()=>removeWish(btn.dataset.wishId));
+    });
+  }
+
+  function addWish(charId,charName,priority){
+    const id=Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+    wishState.list.push({id,charId,charName,priority});
+    saveWishlistLocal();
+    saveWishlistServer();
+    renderWishlist();
+  }
+
+  function removeWish(id){
+    wishState.list=wishState.list.filter(e=>e.id!==id);
+    saveWishlistLocal();
+    saveWishlistServer();
+    renderWishlist();
+  }
+
+  wishlistForm.addEventListener('submit',e=>{
+    e.preventDefault();
+    if(!wishState.selectedSlug){showToast('Selecione um personagem!','error');return;}
+    const data=findCharData(wishState.selectedSlug);
+    addWish(wishState.selectedSlug,data[0],wishPriority.value);
+    showToast(`<span style="color:var(--gold)">${data[0]}</span> adicionado aos desejos!`,'success');
+    wishState.selectedSlug='';
+    wishSearch.value='';
+    wishPreviewIcon.innerHTML='';wishPreviewIcon.style.background='var(--bg3)';
+    wishClearBtn.classList.remove('show');
+    wishSearch.focus();
+  });
+
+  // Reuse combo logic for wishlist
+  wishSearch.addEventListener('input',()=>{
+    wishState.selectedSlug='';
+    wishPreviewIcon.innerHTML='';wishPreviewIcon.style.background='var(--bg3)';
+    wishClearBtn.classList.toggle('show',wishSearch.value.length>0);
+    const q=wishSearch.value;
+    const results=filterChars(q);
+    let h='';
+    if(!results.length)h='<div class="no-match">Nenhum personagem encontrado</div>';
+    else results.forEach(c=>{
+      const elColor=ELE_COLORS[c[2]]||'#8b8f9e';
+      h+=`<div class="opt" data-slug="${c[1]}">
+        <div class="cicon"><img src="/icon/${c[1]}" alt="" onerror="this.style.display='none';this.parentElement.textContent='${c[0][0]}'"></div>
+        <span class="cname">${c[0]}</span>
+        <span class="cele" style="color:${elColor};border-color:${elColor}">${esym(c[2])} ${c[2]}</span>
+      </div>`;
+    });
+    wishComboDropdown.innerHTML=h;
+    wishComboDropdown.classList.add('open');
+    wishComboDropdown.querySelectorAll('.opt').forEach(el=>{
+      el.addEventListener('click',()=>{
+        const slug=el.dataset.slug;
+        const data=findCharData(slug);
+        wishState.selectedSlug=slug;
+        wishSearch.value=data[0];
+        wishPreviewIcon.innerHTML=`<img src="/icon/${slug}" alt="" onerror="this.style.display='none'">`;
+        wishPreviewIcon.style.background='transparent';
+        wishComboDropdown.classList.remove('open');
+        wishClearBtn.classList.add('show');
+        wishPriority.focus();
+      });
+    });
+  });
+  wishSearch.addEventListener('focus',()=>{if(wishComboDropdown.querySelectorAll('.opt').length||wishSearch.value)wishComboDropdown.classList.add('open')});
+  wishSearch.addEventListener('keydown',e=>{
+    if(e.key==='Enter'){e.preventDefault();const f=wishComboDropdown.querySelector('.opt');if(f)f.click()}
+    if(e.key==='Escape')wishComboDropdown.classList.remove('open');
+  });
+  wishClearBtn.addEventListener('click',()=>{
+    wishState.selectedSlug='';wishSearch.value='';wishPreviewIcon.innerHTML='';wishPreviewIcon.style.background='var(--bg3)';wishClearBtn.classList.remove('show');wishSearch.focus();wishComboDropdown.classList.add('open');
+  });
+  document.addEventListener('click',e=>{if(!e.target.closest('.combo-wrap'))wishComboDropdown.classList.remove('open')});
+
+  // Init wishlist
+  wishState.list=loadWishlistLocal();
+  renderWishlist();
+  syncWishlistFromServer();
+  setInterval(()=>{if(!document.hidden){syncWishlistFromServer()}},30000);
 
   state.ranking=loadRanking();
   renderRanking();

@@ -139,7 +139,7 @@ function handler(req, res) {
   const profile = qIdx !== -1 ? new URLSearchParams(req.url.slice(qIdx)).get('profile') || 'default' : 'default';
 
   const password = req.headers['x-access-password'];
-  if ((url === '/api/ranking') && password !== ACCESS_PASSWORD) {
+  if ((url === '/api/ranking' || url === '/api/wishlist') && password !== ACCESS_PASSWORD) {
     res.writeHead(401, { 'Content-Type': 'application/json' });
     res.end('{"error":"Acesso negado"}');
     return;
@@ -182,6 +182,53 @@ function handler(req, res) {
             record_id: e.id,
           }));
           const { error: insErr } = await supabase.from('rankings').insert(rows);
+          if (insErr) { res.writeHead(500); res.end(JSON.stringify({ error: insErr })); return; }
+        }
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end('{"ok":true}');
+      } catch (e) {
+        res.writeHead(400); res.end(JSON.stringify({ error: e.message }));
+      }
+    });
+    return;
+  }
+
+  if (url === '/api/wishlist' && req.method === 'GET') {
+    supabase
+      .from('wishlist')
+      .select('id, char_id, char_name, priority')
+      .eq('profile', profile)
+      .order('id', { ascending: true })
+      .then(({ data, error }) => {
+        if (error) { res.writeHead(500, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error })); return; }
+        const mapped = (data || []).map(r => ({
+          id: r.id,
+          charId: r.char_id,
+          charName: r.char_name,
+          priority: r.priority,
+        }));
+        res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache, no-store, must-revalidate' });
+        res.end(JSON.stringify(mapped));
+      });
+    return;
+  }
+
+  if (url === '/api/wishlist' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => body += chunk);
+    req.on('end', async () => {
+      try {
+        const entries = JSON.parse(body);
+        const { error: delErr } = await supabase.from('wishlist').delete().eq('profile', profile);
+        if (delErr) { res.writeHead(500); res.end(JSON.stringify({ error: delErr })); return; }
+        if (entries.length > 0) {
+          const rows = entries.map(e => ({
+            profile,
+            char_id: e.charId,
+            char_name: e.charName,
+            priority: e.priority || 'medium',
+          }));
+          const { error: insErr } = await supabase.from('wishlist').insert(rows);
           if (insErr) { res.writeHead(500); res.end(JSON.stringify({ error: insErr })); return; }
         }
         res.writeHead(200, { 'Content-Type': 'application/json' });
