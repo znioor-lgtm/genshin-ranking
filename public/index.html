@@ -262,6 +262,37 @@ body{
 .theme-btn .theme-img{width:20px;height:20px;vertical-align:middle;display:inline-block}
 .main-wrapper{flex:1;margin-left:210px;padding:16px;display:flex;justify-content:center;min-height:100vh}
 
+/* Charts */
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.chart-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow)}
+.chart-card.full{grid-column:1/-1}
+.chart-card h3{font-size:.78rem;font-weight:700;color:var(--gold-light);text-transform:uppercase;letter-spacing:1px;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.chart-card h4{font-size:.68rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin:12px 0 8px}
+.bar-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.bar-label{font-size:.72rem;color:var(--text2);min-width:70px;text-align:right;white-space:nowrap}
+.bar-track{flex:1;height:22px;background:var(--bg);border-radius:4px;overflow:hidden;position:relative}
+.bar-fill{height:100%;border-radius:4px;transition:width .6s ease;position:relative}
+.bar-fill .bar-val{position:absolute;right:6px;top:50%;transform:translateY(-50%);font-size:.62rem;font-weight:700;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.5)}
+.bar-count{font-size:.72rem;color:var(--text);min-width:28px;font-weight:600}
+.legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.legend-item{display:flex;align-items:center;gap:5px;font-size:.68rem;color:var(--text2)}
+.legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.overall-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px}
+.overall-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--r-sm);padding:14px;text-align:center}
+.overall-card .num{font-size:1.1rem;font-weight:800;color:var(--gold);display:block}
+.overall-card .lbl{font-size:.6rem;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-top:4px}
+.overall-card .sub{font-size:.6rem;color:var(--text2);margin-top:2px}
+.profile-tag{display:inline-flex;align-items:center;gap:4px;font-size:.65rem;font-weight:600;padding:2px 8px;border-radius:8px;text-transform:uppercase;letter-spacing:.5px}
+.profile-tag.jussi{background:rgba(74,222,128,.1);color:var(--green);border:1px solid rgba(74,222,128,.2)}
+.profile-tag.erii{background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.2)}
+.empty-chart{text-align:center;padding:32px 16px;color:var(--text3);font-size:.78rem}
+
+@media(max-width:640px){
+  .chart-grid{grid-template-columns:1fr}
+  .overall-grid{grid-template-columns:1fr}
+  .bar-label{min-width:55px;font-size:.65rem}
+}
+
 /* Hamburger */
 .menu-btn{
   display:none;position:fixed;top:12px;left:12px;z-index:600;
@@ -303,9 +334,12 @@ body{
     <span>GenshinRank</span>
   </div>
   <nav class="sidebar-nav">
-    <a href="#" class="nav-item active">
+    <a href="#" class="nav-item active" data-tab="ranking">
       <span class="nav-icon"><img src="https://cdn-icons-png.flaticon.com/512/8187/8187996.png" alt="" class="emoji-icon"></span>
       <span class="nav-text">Ranking</span>
+    <a href="#" class="nav-item" data-tab="charts">
+      <span class="nav-icon"><img src="https://cdn-icons-png.flaticon.com/512/2932/2932744.png" alt="" class="emoji-icon"></span>
+      <span class="nav-text">Gráficos</span>
     </a>
   </nav>
   <div class="sidebar-section">
@@ -330,6 +364,7 @@ body{
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 <div class="main-wrapper">
 <div class="container">
+  <div id="rankingTab">
   <div class="header">
     <h1>✦ DPS <span>dos Amores</span></h1>
     <p>Genshin Impact — Ranking de Personagens por DPS</p>
@@ -371,8 +406,17 @@ body{
     </div>
     <div id="rankingList"></div>
   </div>
+  </div>
 
-  <div class="footer">Genshin Impact © HoYoverse · Made by AMORES &amp; Icons do Game8 <span style="opacity:.3">v2</span></div>
+  <div id="chartsTab" style="display:none">
+    <div class="header">
+      <h1>✦ <span>Gráficos</span></h1>
+      <p>Análise de personagens por elemento e arma</p>
+    </div>
+    <div id="chartsContent"></div>
+  </div>
+
+  <div class="footer">Genshin Impact © HoYoverse · Made by AMORES &amp; Icons do Game8 <span style="opacity:.3">v3</span></div>
 </div>
 </div>
 
@@ -839,6 +883,181 @@ body{
   document.querySelectorAll('.nav-item').forEach(b=>{
     b.addEventListener('click',()=>toggleMenu(false));
   });
+
+  // Tab switching
+  const rankingTab=document.getElementById('rankingTab');
+  const chartsTab=document.getElementById('chartsTab');
+  const chartsContent=document.getElementById('chartsContent');
+  document.querySelectorAll('[data-tab]').forEach(el=>{
+    el.addEventListener('click',e=>{
+      e.preventDefault();
+      const tab=el.dataset.tab;
+      document.querySelectorAll('[data-tab]').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
+      rankingTab.style.display=tab==='ranking'?'':'none';
+      chartsTab.style.display=tab==='charts'?'':'none';
+      if(tab==='charts')renderCharts();
+    });
+  });
+
+  // Charts
+  const ELEMENTS=['Pyro','Hydro','Anemo','Electro','Cryo','Geo','Dendro'];
+  const WEAPONS=['Sword','Claymore','Polearm','Bow','Catalyst'];
+  function findCharData(slug){return CHARS.find(c=>c[1]===slug)}
+  function getCharElement(slug){const d=findCharData(slug);return d?d[2]:'None'}
+  function getCharWeapon(slug){const d=findCharData(slug);return d?d[3]:''}
+
+  async function fetchProfileData(profile){
+    try{
+      const r=await fetch('/api/ranking?profile='+profile,{headers:authHeaders()});
+      if(!r.ok)return[];
+      return await r.json();
+    }catch{return[]}
+  }
+
+  async function renderCharts(){
+    const jussiData=await fetchProfileData('jussi');
+    const eriiData=await fetchProfileData('erii');
+    const allData={jussi:jussiData,erii:eriiData};
+    const active=currentProfile;
+
+    let html='';
+
+    // Profile selector for charts
+    html+=`<div class="chart-card full">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
+        ${['jussi','erii'].map(p=>`<button class="profile-btn${p===active?' active':''}" data-chart-profile="${p}" style="width:auto;padding:9px 18px">${p==='jussi'?'Jussi':'Erii'}</button>`).join('')}
+      </div>
+    </div>`;
+
+    const profile=active;
+    const data=allData[profile]||[];
+
+    html+=`<div class="chart-grid">`;
+
+    // 1. Element distribution
+    html+=chartCard('Distribuição por Elemento',renderElementDist(data),'full');
+
+    // 2. Average DPS by element
+    html+=chartCard('DPS Médio por Elemento',renderElementDPS(data),'full');
+
+    // 3. Weapon distribution
+    html+=chartCard('Distribuição por Arma',renderWeaponDist(data),'full');
+
+    html+=`</div>`;
+
+    // 4. Overall comparison
+    html+=`<div class="chart-card full" style="margin-top:16px">
+      <h3>⚖️ Comparativo Geral</h3>
+      ${renderOverall(allData)}
+    </div>`;
+
+    chartsContent.innerHTML=html;
+
+    // Profile toggle in charts
+    document.querySelectorAll('[data-chart-profile]').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        document.querySelectorAll('[data-chart-profile]').forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        currentProfile=btn.dataset.chartProfile;
+        document.querySelectorAll('.profile-btn').forEach(b=>b.classList.toggle('active',b.dataset.profile===currentProfile));
+        renderCharts();
+      });
+    });
+  }
+
+  function chartCard(title,content,cls){
+    return `<div class="chart-card ${cls||''}"><h3>${title}</h3>${content}</div>`;
+  }
+
+  function renderElementDist(data){
+    if(!data.length)return '<div class="empty-chart">Nenhum personagem adicionado</div>';
+    const counts={};ELEMENTS.forEach(e=>counts[e]=0);
+    data.forEach(e=>{const el=getCharElement(e.charId);if(counts[el]!==undefined)counts[el]++});
+    const max=Math.max(...Object.values(counts),1);
+    let html='';
+    ELEMENTS.forEach(el=>{
+      if(counts[el]===0)return;
+      const pct=(counts[el]/max*100).toFixed(0);
+      html+=`<div class="bar-row">
+        <span class="bar-label">${esym(el)} ${el}</span>
+        <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${ELE_COLORS[el]}"><span class="bar-val">${counts[el]}</span></div></div>
+        <span class="bar-count">${counts[el]}</span>
+      </div>`;
+    });
+    html+=`<div class="legend">${ELEMENTS.filter(e=>counts[e]>0).map(e=>`<span class="legend-item"><span class="legend-dot" style="background:${ELE_COLORS[e]}"></span>${e}</span>`).join('')}</div>`;
+    return html;
+  }
+
+  function renderElementDPS(data){
+    if(!data.length)return '<div class="empty-chart">Nenhum personagem adicionado</div>';
+    const groups={};ELEMENTS.forEach(e=>groups[e]=[]);
+    data.forEach(e=>{const el=getCharElement(e.charId);if(groups[el])groups[el].push(e.dps)});
+    const avgs={};ELEMENTS.forEach(e=>{const g=groups[e];avgs[e]=g.length?Math.round(g.reduce((a,b)=>a+b,0)/g.length):0});
+    const max=Math.max(...Object.values(avgs),1);
+    let html='<h4>Média de DPS por elemento</h4>';
+    let bestEl='',bestDPS=0;
+    ELEMENTS.forEach(el=>{
+      if(avgs[el]===0)return;
+      if(avgs[el]>bestDPS){bestDPS=avgs[el];bestEl=el}
+      const pct=(avgs[el]/max*100).toFixed(0);
+      html+=`<div class="bar-row">
+        <span class="bar-label">${esym(el)} ${el}</span>
+        <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${ELE_COLORS[el]}"><span class="bar-val">${formatDPS(avgs[el])}</span></div></div>
+        <span class="bar-count">${formatDPS(avgs[el])}</span>
+      </div>`;
+    });
+    if(bestEl)html+=`<div style="margin-top:10px;font-size:.75rem;color:var(--text2)">💪 Elemento mais forte: <strong style="color:${ELE_COLORS[bestEl]}">${bestEl}</strong> — média de <strong>${formatDPS(bestDPS)}</strong> DPS</div>`;
+    return html;
+  }
+
+  function renderWeaponDist(data){
+    if(!data.length)return '<div class="empty-chart">Nenhum personagem adicionado</div>';
+    const counts={};WEAPONS.forEach(w=>counts[w]=0);
+    const WEP2={'Sword':'Espada','Claymore':'Espadão','Polearm':'Lança','Bow':'Arco','Catalyst':'Catalisador'};
+    data.forEach(e=>{const wp=getCharWeapon(e.charId);if(counts[wp]!==undefined)counts[wp]++});
+    const max=Math.max(...Object.values(counts),1);
+    let html='';
+    WEAPONS.forEach(wp=>{
+      if(counts[wp]===0)return;
+      const pct=(counts[wp]/max*100).toFixed(0);
+      html+=`<div class="bar-row">
+        <span class="bar-label">${wimg(wp)} ${WEP2[wp]||wp}</span>
+        <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:var(--gold);opacity:.7"><span class="bar-val">${counts[wp]}</span></div></div>
+        <span class="bar-count">${counts[wp]}</span>
+      </div>`;
+    });
+    return html;
+  }
+
+  function renderOverall(allData){
+    const jussi=allData.jussi||[];
+    const erii=allData.erii||[];
+    const totalChars=jussi.length+erii.length;
+    const totalDPS=jussi.reduce((a,b)=>a+b.dps,0)+erii.reduce((a,b)=>a+b.dps,0);
+    const avgDPS=totalChars?Math.round(totalDPS/totalChars):0;
+    const jussiTotal=jussi.reduce((a,b)=>a+b.dps,0);
+    const eriiTotal=erii.reduce((a,b)=>a+b.dps,0);
+    const jussiAvg=jussi.length?Math.round(jussiTotal/jussi.length):0;
+    const eriiAvg=erii.length?Math.round(eriiTotal/erii.length):0;
+    const jussiTop=jussi.length?Math.max(...jussi.map(e=>e.dps)):0;
+    const eriiTop=erii.length?Math.max(...erii.map(e=>e.dps)):0;
+    const jussiTopChar=jussi.length?jussi.find(e=>e.dps===jussiTop):null;
+    const eriiTopChar=erii.length?erii.find(e=>e.dps===eriiTop):null;
+
+    let html=`<div class="overall-grid">
+      <div class="overall-card"><span class="num">${totalChars}</span><div class="lbl">Total de Personagens</div><div class="sub"><span class="profile-tag jussi">${jussi.length}</span> + <span class="profile-tag erii">${erii.length}</span></div></div>
+      <div class="overall-card"><span class="num">${formatDPS(totalDPS)}</span><div class="lbl">DPS Total</div><div class="sub"><span class="profile-tag jussi">${formatDPS(jussiTotal)}</span> + <span class="profile-tag erii">${formatDPS(eriiTotal)}</span></div></div>
+      <div class="overall-card"><span class="num">${formatDPS(avgDPS)}</span><div class="lbl">Média Geral</div><div class="sub"><span class="profile-tag jussi">${formatDPS(jussiAvg)}</span> · <span class="profile-tag erii">${formatDPS(eriiAvg)}</span></div></div>
+    </div>`;
+
+    html+=`<div class="overall-grid">
+      <div class="overall-card"><span class="num">${formatDPS(jussiTop)}</span><div class="lbl">Maior DPS — Jussi</div>${jussiTopChar?`<div class="sub">${jussiTopChar.charName}</div>`:''}</div>
+      <div class="overall-card"><span class="num">${formatDPS(eriiTop)}</span><div class="lbl">Maior DPS — Erii</div>${eriiTopChar?`<div class="sub">${eriiTopChar.charName}</div>`:''}</div>
+      <div class="overall-card">${jussiAvg>eriiAvg?`<span class="num" style="color:var(--green)">Jussi</span><div class="lbl">Melhor Média</div><div class="sub">${formatDPS(jussiAvg)} vs ${formatDPS(eriiAvg)}</div>`:eriiAvg>jussiAvg?`<span class="num" style="color:var(--red)">Erii</span><div class="lbl">Melhor Média</div><div class="sub">${formatDPS(eriiAvg)} vs ${formatDPS(jussiAvg)}</div>`:`<span class="num">Empate</span><div class="lbl">Média igual</div>`}</div>
+    </div>`;
+
+    return html;
+  }
 
   state.ranking=loadRanking();
   renderRanking();
