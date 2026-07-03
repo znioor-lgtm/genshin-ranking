@@ -1154,14 +1154,14 @@ body{
       }
       let html='';
       if(d.current.length){
-        html+=`<div class="banner-section-title">📅 Banners Atuais</div><div class="banner-grid" id="bannerGridCurrent">`;
+        html+=`<div class="banner-section-title">Banners Atuais</div><div class="banner-grid" id="bannerGridCurrent">`;
         d.current.forEach((b,i)=>{
           html+=renderBannerCard(b,'current',i);
         });
         html+=`</div>`;
       }
       if(d.next&&d.next.length){
-        html+=`<div class="banner-section-title" style="margin-top:20px">🔜 Próximos Banners</div><div class="banner-grid" id="bannerGridNext">`;
+        html+=`<div class="banner-section-title" style="margin-top:20px">Próximos Banners</div><div class="banner-grid" id="bannerGridNext">`;
         d.next.forEach((b,i)=>{
           html+=renderBannerCard(b,'next',i);
         });
