@@ -520,17 +520,22 @@ body{
     const k=storageKey();
     try{const r=localStorage.getItem(k);const d=r?JSON.parse(r):[];if(Array.isArray(d)&&d[0]?.dps!==undefined)return d;localStorage.removeItem(k);return[]}catch{localStorage.removeItem(k);return[]}
   }
-  async function loadRankingServer(){
+  async function syncFromServer(){
     try{
       const r=await fetch('/api/ranking?profile='+currentProfile,{headers:authHeaders()});
-      if(r.status===401){loginOverlay.classList.remove('hidden');sessionStorage.removeItem(PASSWORD_KEY);return[]}
+      if(r.status===401){loginOverlay.classList.remove('hidden');sessionStorage.removeItem(PASSWORD_KEY);return}
       const d=await r.json();
-      if(Array.isArray(d)&&d.length&&d[0].dps){localStorage.setItem(storageKey(),JSON.stringify(d));state.ranking=d}return d
-    }catch{return[]}
+      if(Array.isArray(d)){
+        localStorage.setItem(storageKey(),JSON.stringify(d));
+        state.ranking=d;
+        renderRanking();
+      }
+    }catch{}
   }
-  function saveRanking(){
+  async function saveRanking(){
     localStorage.setItem(storageKey(),JSON.stringify(state.ranking));
-    fetch('/api/ranking?profile='+currentProfile,{method:'POST',headers:{...authHeaders(),'Content-Type':'application/json'},body:JSON.stringify(state.ranking)}).then(r=>{if(r.status===401){loginOverlay.classList.remove('hidden');sessionStorage.removeItem(PASSWORD_KEY)}}).catch(()=>{});
+    const r=await fetch('/api/ranking?profile='+currentProfile,{method:'POST',headers:{...authHeaders(),'Content-Type':'application/json'},body:JSON.stringify(state.ranking)});
+    if(r.status===401){loginOverlay.classList.remove('hidden');sessionStorage.removeItem(PASSWORD_KEY)}
   }
 
   function findChar(slug){return CHARS.find(c=>c[1]===slug)}
@@ -740,26 +745,26 @@ body{
     return n.toLocaleString('pt-BR');
   }
 
-  function addEntry(charId,charName,dps){
+  async function addEntry(charId,charName,dps){
     const id=Date.now().toString(36)+Math.random().toString(36).slice(2,6);
     state.ranking.push({id,charId,charName,dps});
-    saveRanking();
+    await saveRanking();
     renderRanking();
   }
 
-  function removeEntry(id){
+  async function removeEntry(id){
     state.ranking=state.ranking.filter(e=>e.id!==id);
-    saveRanking();
+    await saveRanking();
     renderRanking();
   }
 
-  form.addEventListener('submit',e=>{
+  form.addEventListener('submit',async e=>{
     e.preventDefault();
     if(!state.selectedSlug){showToast('Selecione um personagem!','error');return;}
     const data=findChar(state.selectedSlug);
     const dps=parseFloat(dpsInput.value);
     if(isNaN(dps)||dps<0){showToast('Informe um DPS válido!','error');return;}
-    addEntry(state.selectedSlug,data[0],dps);
+    await addEntry(state.selectedSlug,data[0],dps);
     showToast(`<span style="color:var(--gold)">${data[0]}</span> — <span class="dps-num">${formatDPS(dps)} DPS</span>`,'success');
     dpsInput.value='';
     state.selectedSlug='';
@@ -769,13 +774,13 @@ body{
     charSearch.focus();
   });
 
-  function switchProfile(profile){
+  async function switchProfile(profile){
     if(profile===currentProfile)return;
-    saveRanking();
+    await saveRanking();
     currentProfile=profile;
     state.ranking=loadRanking();
     renderRanking();
-    loadRankingServer().then(r=>{if(r.length){renderRanking()}});
+    syncFromServer();
     document.querySelectorAll('.profile-btn').forEach(b=>{
       b.classList.toggle('active',b.dataset.profile===profile);
     });
@@ -811,7 +816,8 @@ body{
 
   state.ranking=loadRanking();
   renderRanking();
-  loadRankingServer().then(r=>{if(r.length){renderRanking()}});
+  syncFromServer();
+  setInterval(()=>{if(!document.hidden){syncFromServer()}},30000);
 })();
 </script>
 </body>

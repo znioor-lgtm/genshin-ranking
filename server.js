@@ -159,7 +159,7 @@ function handler(req, res) {
           charName: r.char_name,
           dps: r.dps,
         }));
-        res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache' });
+        res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache, no-store, must-revalidate' });
         res.end(JSON.stringify(mapped));
       });
     return;
