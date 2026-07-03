@@ -837,6 +837,7 @@ body{
     document.querySelectorAll('.profile-btn').forEach(b=>{
       b.classList.toggle('active',b.dataset.profile===profile);
     });
+    if(chartsTab.style.display!=='none')renderCharts();
   }
 
   document.querySelectorAll('.profile-btn').forEach(btn=>{
@@ -922,13 +923,6 @@ body{
 
     let html='';
 
-    // Profile selector for charts
-    html+=`<div class="chart-card full">
-      <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
-        ${['jussi','erii'].map(p=>`<button class="profile-btn${p===active?' active':''}" data-chart-profile="${p}" style="width:auto;padding:9px 18px">${p==='jussi'?'Jussi':'Erii'}</button>`).join('')}
-      </div>
-    </div>`;
-
     const profile=active;
     const data=allData[profile]||[];
 
@@ -952,17 +946,6 @@ body{
     </div>`;
 
     chartsContent.innerHTML=html;
-
-    // Profile toggle in charts
-    document.querySelectorAll('[data-chart-profile]').forEach(btn=>{
-      btn.addEventListener('click',()=>{
-        document.querySelectorAll('[data-chart-profile]').forEach(b=>b.classList.remove('active'));
-        btn.classList.add('active');
-        currentProfile=btn.dataset.chartProfile;
-        document.querySelectorAll('.profile-btn').forEach(b=>b.classList.toggle('active',b.dataset.profile===currentProfile));
-        renderCharts();
-      });
-    });
   }
 
   function chartCard(title,content,cls){
@@ -1006,7 +989,7 @@ body{
         <span class="bar-count">${formatDPS(avgs[el])}</span>
       </div>`;
     });
-    if(bestEl)html+=`<div style="margin-top:10px;font-size:.75rem;color:var(--text2)">💪 Elemento mais forte: <strong style="color:${ELE_COLORS[bestEl]}">${bestEl}</strong> — média de <strong>${formatDPS(bestDPS)}</strong> DPS</div>`;
+    if(bestEl)html+=`<div style="margin-top:10px;font-size:.75rem;color:var(--text2)">💪 Elemento mais forte: ${esym(bestEl)} <strong style="color:${ELE_COLORS[bestEl]}">${bestEl}</strong> — média de <strong>${formatDPS(bestDPS)}</strong> DPS</div>`;
     return html;
   }
 
