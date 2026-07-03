@@ -10,7 +10,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const PORT = 3002;
 const DIR = __dirname;
-const ACCESS_PASSWORD = process.env.ACCESS_PASSWORD || 'amores2024';
+const ACCESS_PASSWORD = process.env.ACCESS_PASSWORD || 'amores2026';
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
