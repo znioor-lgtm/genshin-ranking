@@ -929,13 +929,13 @@ body{
     html+=`<div class="chart-grid">`;
 
     // 1. Element distribution
-    html+=chartCard('Distribuição por Elemento',renderElementDist(data),'full');
+    html+=chartCard('Quantos Main DPS por Elemento',renderElementDist(data),'full');
 
     // 2. Average DPS by element
-    html+=chartCard('DPS Médio por Elemento',renderElementDPS(data),'full');
+    html+=chartCard('Média de DPS por Elemento',renderElementDPS(data),'full');
 
     // 3. Weapon distribution
-    html+=chartCard('Distribuição por Arma',renderWeaponDist(data),'full');
+    html+=chartCard('Quantidade por Tipos de Arma',renderWeaponDist(data),'full');
 
     html+=`</div>`;
 
@@ -989,7 +989,7 @@ body{
         <span class="bar-count">${formatDPS(avgs[el])}</span>
       </div>`;
     });
-    if(bestEl)html+=`<div style="margin-top:10px;font-size:.75rem;color:var(--text2)">💪 Elemento mais forte: ${esym(bestEl)} <strong style="color:${ELE_COLORS[bestEl]}">${bestEl}</strong> — média de <strong>${formatDPS(bestDPS)}</strong> DPS</div>`;
+    if(bestEl)html+=`<div style="margin-top:10px;font-size:.75rem;color:var(--text2)">Elemento mais forte: ${esym(bestEl)} <strong style="color:${ELE_COLORS[bestEl]}">${bestEl}</strong> — média de <strong>${formatDPS(bestDPS)}</strong> DPS</div>`;
     return html;
   }
 
