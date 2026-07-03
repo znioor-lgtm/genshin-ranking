@@ -285,72 +285,81 @@ function parseBanners(html) {
   const $ = cheerio.load(html);
   const result = { current: [], next: [], lastUpdated: null };
 
-  // Get last updated date from the meta
   $('time[datetime]').each((i, el) => {
     const dt = $(el).attr('datetime');
     if (dt && !result.lastUpdated) result.lastUpdated = dt;
   });
 
-  // Look for the Current Banners section
-  const currentSection = $('#hl_2').parent();
-  if (currentSection.length) {
-    const tables = currentSection.nextAll('table');
-    // Process banner tables
-    tables.each((i, table) => {
-      const $table = $(table);
-      const rows = $table.find('tr');
-      if (rows.length < 2) return;
-      
-      const banner = { name: '', image: '', date: '', characters: [], isWeapon: false };
-      
-      // First row has banner image and name
-      const firstRow = $(rows[0]);
-      const bannerCell = $(firstRow.find('td')[0]);
-      const infoCell = $(firstRow.find('td')[1]);
-      
-      // Extract banner name
+  function extractBannersFromTable($table) {
+    const rows = $table.find('tr');
+    if (rows.length < 2) return [];
+    // Skip header-only tables (Character/Weapon Rate-Ups etc.)
+    const headerText = $(rows[0]).text().trim().toLowerCase();
+    if (headerText.includes('rate-up')) return [];
+
+    const banners = [];
+    // Row 0 is header (e.g. "Phase 1 Banners"), rows 1+ are individual banners
+    for (let r = 1; r < rows.length; r++) {
+      const row = $(rows[r]);
+      const cells = row.find('td');
+      if (cells.length < 2) continue;
+      const bannerCell = $(cells[0]);
+      const infoCell = $(cells[1]);
+
       const nameLink = bannerCell.find('a');
-      banner.name = nameLink.text().trim() || 'Banner';
-      
-      // Extract banner image
-      const img = bannerCell.find('img[data-src]');
-      if (img.length) banner.image = img.attr('data-src');
-      
-      // Extract dates
+      const bannerName = nameLink.text().trim();
+      if (!bannerName) continue;
+
+      const img = bannerCell.find('img[data-src], img[src]');
+      const image = img.length ? (img.attr('data-src') || img.attr('src') || '') : '';
+
       const dateText = infoCell.text();
       const dateMatch = dateText.match(/(\w+\s+\d+,\s*\d{4})\s*-\s*(\w+\s+\d+,\s*\d{4})/);
-      if (dateMatch) banner.date = `${dateMatch[1]} - ${dateMatch[2]}`;
-      
-      // Extract 5-star characters
-      const boldTexts = infoCell.find('b');
-      boldTexts.each((j, b) => {
-        if ($(b).text().trim() === '5 Star Rate-Up:') {
-          const charLinks = $(b).parent().find('a');
-          charLinks.each((k, a) => {
-            const name = $(a).text().trim();
-            const img2 = $(a).find('img[data-src]');
-            const icon = img2.length ? img2.attr('data-src') : '';
-            if (name && name !== 'Sandrone Image' && name !== 'Citlali Image' && name !== 'Beidou Image' && name !== 'Diona Image' && name !== 'Freminet Image') {
-              banner.characters.push({ name, icon, rarity: 5 });
-            }
-          });
-        }
-        if ($(b).text().trim() === '4 Star Rate-Up:') {
-          const charLinks = $(b).parent().find('a');
-          charLinks.each((k, a) => {
-            const name = $(a).text().trim();
-            const img2 = $(a).find('img[data-src]');
-            const icon = img2.length ? img2.attr('data-src') : '';
-            if (name && name !== 'Sandrone Image' && name !== 'Citlali Image' && name !== 'Beidou Image' && name !== 'Diona Image' && name !== 'Freminet Image') {
-              banner.characters.push({ name, icon, rarity: 4 });
-            }
-          });
-        }
+      const date = dateMatch ? `${dateMatch[1]} - ${dateMatch[2]}` : '';
+
+      const characters = [];
+      infoCell.find('b').each((j, b) => {
+        const txt = $(b).text().trim();
+        let rarity = 0;
+        if (txt === '5 Star Rate-Up:') rarity = 5;
+        else if (txt === '4 Star Rate-Up:') rarity = 4;
+        if (!rarity) return;
+        $(b).parent().find('a').each((k, a) => {
+          const name = $(a).text().trim();
+          if (!name || name.endsWith(' Image')) return;
+          const img2 = $(a).find('img[data-src], img[src]');
+          const icon = img2.length ? (img2.attr('data-src') || img2.attr('src') || '') : '';
+          characters.push({ name, icon, rarity });
+        });
       });
-      
-      if (banner.name) result.current.push(banner);
-    });
+
+      banners.push({ name: bannerName, image, date, characters });
+    }
+    return banners;
   }
+
+  function getTablesBetween(startId, endId) {
+    const start = $(`#${startId}`);
+    if (!start.length) return [];
+    const tables = [];
+    let el = start.next();
+    while (el.length) {
+      if (endId && el.is(`#${endId}`)) break;
+      if (el.is('table')) tables.push(el);
+      el = el.next();
+    }
+    return tables;
+  }
+
+  const currentTables = getTablesBetween('hl_2', 'hl_3');
+  currentTables.forEach(t => {
+    extractBannersFromTable(t).forEach(b => result.current.push(b));
+  });
+
+  const nextTables = getTablesBetween('hl_3', 'hl_4');
+  nextTables.forEach(t => {
+    extractBannersFromTable(t).forEach(b => result.next.push(b));
+  });
 
   return result;
 }
