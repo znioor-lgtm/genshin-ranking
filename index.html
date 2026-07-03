@@ -168,38 +168,6 @@ body{
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
 ::-webkit-scrollbar-thumb:hover{background:var(--text3)}
 
-/* Login */
-.login-overlay{
-  position:fixed;inset:0;z-index:9999;
-  background:var(--bg);
-  display:flex;align-items:center;justify-content:center;
-  backdrop-filter:blur(4px);
-}
-.login-overlay.hidden{display:none}
-.login-box{
-  background:var(--bg2);border:1px solid var(--border);
-  border-radius:var(--radius);padding:40px;
-  width:100%;max-width:360px;box-shadow:var(--shadow);
-  text-align:center;
-}
-.login-box h1{font-size:1.3rem;font-weight:800;color:var(--gold-light);text-transform:uppercase;letter-spacing:2px;margin-bottom:4px}
-.login-box p{color:var(--text2);font-size:.78rem;margin-bottom:24px}
-.login-box .form-group{margin-bottom:16px;text-align:left}
-.login-box .form-group label{font-size:.68rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;display:block}
-.login-box .form-group input{width:100%;padding:10px 12px;background:var(--bg);border:1px solid var(--border);border-radius:var(--r-sm);color:var(--text);font-size:.85rem;font-family:var(--font);outline:none;transition:border-color .2s,box-shadow .2s}
-.login-box .form-group input:focus{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold-glow)}
-.login-box .login-btn{
-  width:100%;padding:10px;background:linear-gradient(135deg,var(--gold),#b8962f);
-  border:none;border-radius:var(--r-sm);color:#0b0e14;
-  font-size:.82rem;font-weight:700;font-family:var(--font);
-  text-transform:uppercase;letter-spacing:1px;cursor:pointer;
-  transition:filter .2s,transform .15s;
-}
-.login-box .login-btn:hover{filter:brightness(1.15)}
-.login-box .login-btn:active{transform:scale(.97)}
-.login-box .login-error{color:var(--red);font-size:.75rem;margin-top:8px;display:none}
-.login-box .login-error.show{display:block}
-
 /* Sidebar */
 .sidebar{
   position:fixed;left:0;top:0;bottom:0;width:210px;
@@ -369,47 +337,8 @@ body{
 
 <div class="toast" id="toast"></div>
 
-<div class="login-overlay" id="loginOverlay">
-  <div class="login-box">
-    <h1>✦ GenshinRank</h1>
-    <p>Digite a senha para acessar</p>
-    <div class="form-group">
-      <label>Senha</label>
-      <input type="password" id="loginPassword" placeholder="••••••••" autofocus>
-    </div>
-    <button class="login-btn" id="loginBtn">Entrar</button>
-    <div class="login-error" id="loginError">Senha incorreta</div>
-  </div>
-</div>
-
 <script>
 (function(){
-  const PASSWORD_KEY='genshin_pass';
-  function getPassword(){return sessionStorage.getItem(PASSWORD_KEY)}
-  function setPassword(p){sessionStorage.setItem(PASSWORD_KEY,p)}
-  function authHeaders(){const p=getPassword();return p?{'x-access-password':p}:{}}
-
-  const loginOverlay=document.getElementById('loginOverlay');
-  const loginPassword=document.getElementById('loginPassword');
-  const loginBtn=document.getElementById('loginBtn');
-  const loginError=document.getElementById('loginError');
-
-  async function tryLogin(password){
-    try{
-      const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password})});
-      const d=await r.json();
-      if(d.ok){setPassword(password);loginOverlay.classList.add('hidden');return true}
-      loginError.classList.add('show');return false
-    }catch{loginError.textContent='Erro de conexão';loginError.classList.add('show');return false}
-  }
-
-  loginBtn.addEventListener('click',()=>{const p=loginPassword.value;if(p)tryLogin(p)});
-  loginPassword.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();loginBtn.click()}});
-
-  if(!getPassword()){
-    loginOverlay.classList.remove('hidden');
-  }
-
   const PROFILES=['jussi','erii'];
   const PROFILE_LABEL={jussi:'Jussi',erii:'Erii'};
   let currentProfile='jussi';
@@ -521,16 +450,11 @@ body{
     try{const r=localStorage.getItem(k);const d=r?JSON.parse(r):[];if(Array.isArray(d)&&d[0]?.dps!==undefined)return d;localStorage.removeItem(k);return[]}catch{localStorage.removeItem(k);return[]}
   }
   async function loadRankingServer(){
-    try{
-      const r=await fetch('/api/ranking?profile='+currentProfile,{headers:authHeaders()});
-      if(r.status===401){loginOverlay.classList.remove('hidden');sessionStorage.removeItem(PASSWORD_KEY);return[]}
-      const d=await r.json();
-      if(Array.isArray(d)&&d.length&&d[0].dps){localStorage.setItem(storageKey(),JSON.stringify(d));state.ranking=d}return d
-    }catch{return[]}
+    try{const r=await fetch('/api/ranking?profile='+currentProfile);const d=await r.json();if(Array.isArray(d)&&d.length&&d[0].dps){localStorage.setItem(storageKey(),JSON.stringify(d));state.ranking=d}return d}catch{return[]}
   }
   function saveRanking(){
     localStorage.setItem(storageKey(),JSON.stringify(state.ranking));
-    fetch('/api/ranking?profile='+currentProfile,{method:'POST',headers:{...authHeaders(),'Content-Type':'application/json'},body:JSON.stringify(state.ranking)}).then(r=>{if(r.status===401){loginOverlay.classList.remove('hidden');sessionStorage.removeItem(PASSWORD_KEY)}}).catch(()=>{});
+    fetch('/api/ranking?profile='+currentProfile,{method:'POST',body:JSON.stringify(state.ranking)}).catch(()=>{});
   }
 
   function findChar(slug){return CHARS.find(c=>c[1]===slug)}
@@ -799,7 +723,7 @@ body{
       text.textContent='Modo Claro';
     }else{
       icon.src='https://cdn-icons-png.flaticon.com/512/728/728068.png';
-      text.textContent='Modo Escuro';
+      text.textContent='Modo TESTE';
     }
   }
   const savedTheme=localStorage.getItem('genshin_theme')||'dark';

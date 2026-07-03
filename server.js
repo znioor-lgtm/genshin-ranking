@@ -10,6 +10,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const PORT = 3002;
 const DIR = __dirname;
+const ACCESS_PASSWORD = process.env.ACCESS_PASSWORD || 'amores2024';
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -113,8 +114,36 @@ function handler(req, res) {
     return;
   }
 
+  if (url === '/api/login' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => body += chunk);
+    req.on('end', () => {
+      try {
+        const { password } = JSON.parse(body);
+        if (password === ACCESS_PASSWORD) {
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end('{"ok":true}');
+        } else {
+          res.writeHead(401, { 'Content-Type': 'application/json' });
+          res.end('{"error":"Senha incorreta"}');
+        }
+      } catch (e) {
+        res.writeHead(400);
+        res.end(JSON.stringify({ error: e.message }));
+      }
+    });
+    return;
+  }
+
   const qIdx = req.url.indexOf('?');
   const profile = qIdx !== -1 ? new URLSearchParams(req.url.slice(qIdx)).get('profile') || 'default' : 'default';
+
+  const password = req.headers['x-access-password'];
+  if ((url === '/api/ranking') && password !== ACCESS_PASSWORD) {
+    res.writeHead(401, { 'Content-Type': 'application/json' });
+    res.end('{"error":"Acesso negado"}');
+    return;
+  }
 
   if (url === '/api/ranking' && req.method === 'GET') {
     supabase
