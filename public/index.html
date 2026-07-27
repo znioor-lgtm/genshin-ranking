@@ -268,7 +268,8 @@ body{
 }
 .data-btn:hover{background:var(--card);color:var(--text)}
 .data-btn .data-icon{width:22px;height:22px;text-align:center;flex-shrink:0;display:flex;align-items:center;justify-content:center}
-.data-btn .data-icon img{width:20px;height:20px;vertical-align:middle;display:block}
+.data-btn .data-icon img{width:20px;height:20px;vertical-align:middle;display:block;filter:invert(1)}
+[data-theme="light"] .data-btn .data-icon img{filter:none}
 .data-btn.export:hover{border-color:var(--green);color:var(--green)}
 .data-btn.import:hover{border-color:var(--gold);color:var(--gold)}
 #importFile{display:none}
