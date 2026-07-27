@@ -171,45 +171,79 @@ body{
 /* Login */
 .login-overlay{
   position:fixed;inset:0;z-index:9999;
-  background:var(--bg);
   display:flex;align-items:center;justify-content:center;
-  backdrop-filter:blur(4px);
+  background:linear-gradient(135deg,#0a0e1a 0%,#111830 40%,#0d1a2e 100%);
+  overflow:hidden;
 }
 .login-overlay.hidden{display:none}
+.login-bg{position:absolute;inset:0;overflow:hidden}
+.orb{position:absolute;border-radius:50%;filter:blur(80px);opacity:.5;animation:orbFloat 8s ease-in-out infinite}
+.orb-1{width:300px;height:300px;background:radial-gradient(circle,rgba(59,130,246,.6),transparent 70%);top:-50px;left:-80px;animation-delay:0s}
+.orb-2{width:250px;height:250px;background:radial-gradient(circle,rgba(99,102,241,.5),transparent 70%);bottom:-60px;right:-40px;animation-delay:2s;animation-duration:10s}
+.orb-3{width:180px;height:180px;background:radial-gradient(circle,rgba(56,189,248,.4),transparent 70%);top:40%;right:20%;animation-delay:4s;animation-duration:12s}
+.orb-4{width:140px;height:140px;background:radial-gradient(circle,rgba(139,92,246,.35),transparent 70%);bottom:20%;left:15%;animation-delay:1s;animation-duration:9s}
+@keyframes orbFloat{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(30px,-20px) scale(1.1)}66%{transform:translate(-20px,25px) scale(.95)}}
 .login-box{
-  background:var(--bg2);border:1px solid var(--border);
-  border-radius:var(--radius);padding:40px;
-  width:100%;max-width:360px;box-shadow:var(--shadow);
+  position:relative;z-index:1;
+  background:rgba(15,23,42,.65);
+  backdrop-filter:blur(24px) saturate(1.4);
+  -webkit-backdrop-filter:blur(24px) saturate(1.4);
+  border:1px solid rgba(148,163,184,.12);
+  border-radius:20px;padding:44px 36px;
+  width:100%;max-width:380px;
+  box-shadow:0 8px 40px rgba(0,0,0,.4),0 0 80px rgba(59,130,246,.08),inset 0 1px 0 rgba(255,255,255,.06);
   text-align:center;
+  animation:loginFadeIn .6s ease;
 }
-.login-box h1{font-size:1.3rem;font-weight:800;color:var(--gold-light);text-transform:uppercase;letter-spacing:2px;margin-bottom:4px}
-.login-box p{color:var(--text2);font-size:.78rem;margin-bottom:24px}
+@keyframes loginFadeIn{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:none}}
+.login-logo{
+  font-size:1.8rem;color:#60a5fa;margin-bottom:4px;
+  filter:drop-shadow(0 0 12px rgba(96,165,250,.5));
+  animation:logoPulse 3s ease-in-out infinite;
+}
+@keyframes logoPulse{0%,100%{filter:drop-shadow(0 0 12px rgba(96,165,250,.5))}50%{filter:drop-shadow(0 0 24px rgba(96,165,250,.8))}}
+.login-box h1{font-size:1.4rem;font-weight:800;color:#f1f5f9;text-transform:uppercase;letter-spacing:3px;margin-bottom:4px}
+.login-box p{color:#94a3b8;font-size:.78rem;margin-bottom:24px}
 .login-box .form-group{margin-bottom:16px;text-align:left}
-.login-box .form-group label{font-size:.68rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;display:block}
-.login-box .form-group input{width:100%;padding:10px 12px;background:var(--bg);border:1px solid var(--border);border-radius:var(--r-sm);color:var(--text);font-size:.85rem;font-family:var(--font);outline:none;transition:border-color .2s,box-shadow .2s}
-.login-box .form-group input:focus{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold-glow)}
+.login-box .form-group label{font-size:.68rem;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;display:block}
+.login-box .form-group input{
+  width:100%;padding:11px 14px;
+  background:rgba(15,23,42,.5);border:1px solid rgba(148,163,184,.15);
+  border-radius:10px;color:#f1f5f9;font-size:.85rem;font-family:var(--font);
+  outline:none;transition:all .25s;
+}
+.login-box .form-group input::placeholder{color:#475569}
+.login-box .form-group input:focus{border-color:rgba(96,165,250,.6);box-shadow:0 0 0 3px rgba(96,165,250,.15);background:rgba(15,23,42,.7)}
 .login-box .login-btn{
-  width:100%;padding:10px;background:linear-gradient(135deg,var(--gold),#b8962f);
-  border:none;border-radius:var(--r-sm);color:#0b0e14;
+  width:100%;padding:11px;
+  background:linear-gradient(135deg,#3b82f6,#6366f1);
+  border:none;border-radius:10px;color:#fff;
   font-size:.82rem;font-weight:700;font-family:var(--font);
   text-transform:uppercase;letter-spacing:1px;cursor:pointer;
-  transition:filter .2s,transform .15s;
+  transition:all .25s;
+  box-shadow:0 4px 16px rgba(59,130,246,.3);
 }
-.login-box .login-btn:hover{filter:brightness(1.15)}
-.login-box .login-btn:active{transform:scale(.97)}
-.login-box .login-error{color:var(--red);font-size:.75rem;margin-top:8px;display:none}
+.login-box .login-btn:hover{filter:brightness(1.15);box-shadow:0 6px 24px rgba(59,130,246,.45);transform:translateY(-1px)}
+.login-box .login-btn:active{transform:translateY(0) scale(.98)}
+.login-box .login-error{color:#f87171;font-size:.75rem;margin-top:8px;display:none}
 .login-box .login-error.show{display:block}
 .profile-select{display:flex;gap:16px;justify-content:center;margin-top:8px}
 .profile-choice{
-  display:flex;flex-direction:column;align-items:center;gap:8px;
-  padding:20px 28px;border-radius:var(--r-sm);
-  background:var(--bg);border:2px solid var(--border);
-  cursor:pointer;transition:all .2s;font-family:var(--font);
+  display:flex;flex-direction:column;align-items:center;gap:10px;
+  padding:22px 28px;border-radius:14px;
+  background:rgba(15,23,42,.4);border:1px solid rgba(148,163,184,.1);
+  cursor:pointer;transition:all .3s;font-family:var(--font);
 }
-.profile-choice:hover{border-color:var(--gold);transform:translateY(-2px);box-shadow:0 4px 16px rgba(154,123,32,.2)}
-.profile-choice .avatar-dot{width:48px;height:48px;border-radius:50%;background:var(--bg3);overflow:hidden;border:2px solid var(--border);display:flex;align-items:center;justify-content:center}
+.profile-choice:hover{
+  border-color:rgba(96,165,250,.5);
+  background:rgba(30,41,59,.6);
+  transform:translateY(-3px);
+  box-shadow:0 8px 28px rgba(59,130,246,.2);
+}
+.profile-choice .avatar-dot{width:52px;height:52px;border-radius:50%;overflow:hidden;border:2px solid rgba(148,163,184,.15);display:flex;align-items:center;justify-content:center;transition:border-color .3s,box-shadow .3s}
+.profile-choice:hover .avatar-dot{border-color:rgba(96,165,250,.6);box-shadow:0 0 20px rgba(59,130,246,.3)}
 .profile-choice .avatar-dot img{width:100%;height:100%;object-fit:cover;border-radius:50%}
-.profile-choice .name{font-size:.85rem;font-weight:700;color:var(--text)}
+.profile-choice .name{font-size:.85rem;font-weight:700;color:#e2e8f0}
 
 /* Sidebar */
 .sidebar{
@@ -557,8 +591,15 @@ body{
 <div class="toast" id="toast"></div>
 
 <div class="login-overlay" id="loginOverlay">
+  <div class="login-bg">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+    <div class="orb orb-4"></div>
+  </div>
   <div class="login-box">
-    <h1>✦ GenshinRank</h1>
+    <div class="login-logo">✦</div>
+    <h1>GenshinRank</h1>
     <div id="loginStepPass">
       <p>Digite a senha para acessar</p>
       <div class="form-group">
