@@ -1090,14 +1090,7 @@ body{
   function getCharElement(slug){const d=findCharData(slug);return d?d[2]:'None'}
   function getCharWeapon(slug){const d=findCharData(slug);return d?d[3]:''}
 
-  async function fetchProfileData(profile){
-    try{
-      const r=await fetch('/api/ranking?profile='+profile,{headers:authHeaders()});
-      if(r.ok){
-        const d=await r.json();
-        if(Array.isArray(d)&&d.length)return d;
-      }
-    }catch{}
+  function loadProfileLocal(profile){
     try{
       const raw=localStorage.getItem('genshin_dps_v4_'+profile);
       const d=raw?JSON.parse(raw):[];
@@ -1105,9 +1098,22 @@ body{
     }catch{return[]}
   }
 
+  async function fetchProfileData(profile){
+    try{
+      const c=new AbortController();
+      const t=setTimeout(()=>c.abort(),3000);
+      const r=await fetch('/api/ranking?profile='+profile,{headers:authHeaders(),signal:c.signal});
+      clearTimeout(t);
+      if(r.ok){
+        const d=await r.json();
+        if(Array.isArray(d)&&d.length)return d;
+      }
+    }catch{}
+    return loadProfileLocal(profile);
+  }
+
   async function renderCharts(){
-    const jussiData=await fetchProfileData('jussi');
-    const eriiData=await fetchProfileData('erii');
+    const [jussiData,eriiData]=await Promise.all([fetchProfileData('jussi'),fetchProfileData('erii')]);
     const allData={jussi:jussiData,erii:eriiData};
     const active=currentProfile;
 
