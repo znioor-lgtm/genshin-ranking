@@ -260,6 +260,17 @@ body{
 .theme-btn:hover{background:var(--card);color:var(--text)}
 .theme-btn .theme-icon{font-size:1rem;width:22px;text-align:center;flex-shrink:0}
 .theme-btn .theme-img{width:20px;height:20px;vertical-align:middle;display:inline-block}
+.data-btn{
+  display:flex;align-items:center;gap:8px;width:100%;padding:9px 12px;
+  border:1px solid var(--border);border-radius:var(--r-sm);
+  background:transparent;color:var(--text2);font-size:.78rem;
+  font-family:var(--font);cursor:pointer;transition:all .2s;margin-bottom:4px;
+}
+.data-btn:hover{background:var(--card);color:var(--text)}
+.data-btn .data-icon{font-size:1rem;width:22px;text-align:center;flex-shrink:0}
+.data-btn.export:hover{border-color:var(--green);color:var(--green)}
+.data-btn.import:hover{border-color:var(--gold);color:var(--gold)}
+#importFile{display:none}
 .main-wrapper{flex:1;margin-left:210px;padding:16px;display:flex;justify-content:center;min-height:100vh}
 
 /* Charts */
@@ -395,6 +406,16 @@ body{
       <span class="theme-icon"><img src="https://cdn-icons-png.flaticon.com/512/728/728068.png" alt="" class="theme-img"></span>
       <span class="theme-text">Modo escuro</span>
     </button>
+    <div class="sec-label" style="margin-top:12px">Dados</div>
+    <button class="data-btn export" id="exportBtn" title="Exportar dados para arquivo">
+      <span class="data-icon">📤</span>
+      <span>Exportar Dados</span>
+    </button>
+    <button class="data-btn import" id="importBtn" title="Importar dados de arquivo">
+      <span class="data-icon">📥</span>
+      <span>Importar Dados</span>
+    </button>
+    <input type="file" id="importFile" accept=".json">
   </div>
 </aside>
 <button class="menu-btn" id="menuBtn" title="Abrir menu">☰</button>
@@ -957,6 +978,68 @@ body{
   themeToggle.addEventListener('click',()=>{
     const cur=document.documentElement.getAttribute('data-theme')||'dark';
     applyTheme(cur==='dark'?'light':'dark');
+  });
+
+  // Export/Import data
+  const exportBtn=document.getElementById('exportBtn');
+  const importBtn=document.getElementById('importBtn');
+  const importFile=document.getElementById('importFile');
+
+  exportBtn.addEventListener('click',()=>{
+    const data={
+      version:1,
+      exportedAt:new Date().toISOString(),
+      rankings:{
+        jussi:JSON.parse(localStorage.getItem('genshin_dps_v4_jussi')||'[]'),
+        erii:JSON.parse(localStorage.getItem('genshin_dps_v4_erii')||'[]')
+      },
+      wishlist:{
+        jussi:JSON.parse(localStorage.getItem('genshin_wish_jussi')||'[]'),
+        erii:JSON.parse(localStorage.getItem('genshin_wish_erii')||'[]')
+      },
+      theme:localStorage.getItem('genshin_theme')||'dark'
+    };
+    const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;
+    a.download='genshin-ranking-backup-'+new Date().toISOString().slice(0,10)+'.json';
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('Dados exportados com sucesso!','success');
+  });
+
+  importBtn.addEventListener('click',()=>importFile.click());
+
+  importFile.addEventListener('change',async e=>{
+    const file=e.target.files[0];
+    if(!file)return;
+    try{
+      const text=await file.text();
+      const data=JSON.parse(text);
+      if(!data.version||!data.rankings)throw new Error('Arquivo inválido');
+      
+      if(data.rankings.jussi)localStorage.setItem('genshin_dps_v4_jussi',JSON.stringify(data.rankings.jussi));
+      if(data.rankings.erii)localStorage.setItem('genshin_dps_v4_erii',JSON.stringify(data.rankings.erii));
+      if(data.wishlist)if(data.wishlist.jussi)localStorage.setItem('genshin_wish_jussi',JSON.stringify(data.wishlist.jussi));
+      if(data.wishlist)if(data.wishlist.erii)localStorage.setItem('genshin_wish_erii',JSON.stringify(data.wishlist.erii));
+      if(data.theme)localStorage.setItem('genshin_theme',data.theme);
+      
+      for(const profile of ['jussi','erii']){
+        if(data.rankings[profile]){
+          await fetch('/api/ranking?profile='+profile,{method:'POST',headers:{...authHeaders(),'Content-Type':'application/json'},body:JSON.stringify(data.rankings[profile])});
+        }
+        if(data.wishlist&&data.wishlist[profile]){
+          await fetch('/api/wishlist?profile='+profile,{method:'POST',headers:{...authHeaders(),'Content-Type':'application/json'},body:JSON.stringify(data.wishlist[profile])});
+        }
+      }
+      
+      showToast('Dados importados com sucesso! Recarregando...','success');
+      setTimeout(()=>location.reload(),1500);
+    }catch(err){
+      showToast('Erro ao importar: '+err.message,'error');
+    }
+    importFile.value='';
   });
 
   // Mobile sidebar toggle
