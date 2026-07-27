@@ -252,14 +252,22 @@ body{
 .profile-btn.active .uid{color:var(--text2)}
 .profile-btn.active .avatar-dot{border-color:var(--gold)}
 .theme-btn{
-  display:flex;align-items:center;gap:8px;width:100%;padding:9px 12px;margin-top:8px;
-  border:1px solid var(--border);border-radius:var(--r-sm);
-  background:transparent;color:var(--text2);font-size:.78rem;
-  font-family:var(--font);cursor:pointer;transition:all .2s;
+  display:none
 }
-.theme-btn:hover{background:var(--card);color:var(--text)}
-.theme-btn .theme-icon{font-size:1rem;width:22px;text-align:center;flex-shrink:0}
-.theme-btn .theme-img{width:20px;height:20px;vertical-align:middle;display:inline-block}
+.theme-float{
+  position:fixed;top:14px;right:14px;z-index:600;
+  width:34px;height:34px;border-radius:50%;
+  background:var(--bg2);border:1px solid var(--border);
+  color:var(--gold);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .3s;box-shadow:0 2px 8px rgba(0,0,0,.15)
+}
+.theme-float:hover{background:var(--card);transform:rotate(20deg) scale(1.08)}
+.theme-float svg{width:16px;height:16px}
+[data-theme="dark"] .theme-float .icon-sun{display:block}
+[data-theme="dark"] .theme-float .icon-moon{display:none}
+[data-theme="light"] .theme-float .icon-sun{display:none}
+[data-theme="light"] .theme-float .icon-moon{display:block}
 .data-btn{
   display:flex;align-items:center;gap:8px;width:100%;padding:9px 12px;
   border:1px solid var(--border);border-radius:var(--r-sm);
@@ -406,23 +414,23 @@ body{
       <span>Erii</span>
       <span class="uid">UID: 638653766</span>
     </button>
-    <button class="theme-btn" id="themeToggle" title="Alternar tema">
-      <span class="theme-icon"><img src="https://cdn-icons-png.flaticon.com/512/728/728068.png" alt="" class="theme-img"></span>
-      <span class="theme-text">Modo escuro</span>
-    </button>
     <div class="sec-label" style="margin-top:12px">Dados</div>
     <button class="data-btn export" id="exportBtn" title="Exportar dados para arquivo">
-      <span class="data-icon"><img src="https://cdn-icons-png.flaticon.com/512/443/443769.png" alt="" class="theme-img"></span>
+      <span class="data-icon"><img src="https://cdn-icons-png.flaticon.com/512/443/443769.png" alt=""></span>
       <span>Exportar Dados</span>
     </button>
     <button class="data-btn import" id="importBtn" title="Importar dados de arquivo">
-      <span class="data-icon"><img src="https://cdn-icons-png.flaticon.com/512/566/566051.png" alt="" class="theme-img"></span>
+      <span class="data-icon"><img src="https://cdn-icons-png.flaticon.com/512/566/566051.png" alt=""></span>
       <span>Importar Dados</span>
     </button>
     <input type="file" id="importFile" accept=".json">
   </div>
 </aside>
 <button class="menu-btn" id="menuBtn" title="Abrir menu">☰</button>
+<button class="theme-float" id="themeToggle" title="Alternar tema">
+  <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+  <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+</button>
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 <div class="main-wrapper">
 <div class="container">
@@ -967,15 +975,6 @@ body{
   function applyTheme(theme){
     document.documentElement.setAttribute('data-theme',theme);
     localStorage.setItem('genshin_theme',theme);
-    const icon=themeToggle.querySelector('.theme-img');
-    const text=themeToggle.querySelector('.theme-text');
-    if(theme==='light'){
-      icon.src='https://cdn-icons-png.flaticon.com/512/66/66275.png';
-      text.textContent='Modo Claro';
-    }else{
-      icon.src='https://cdn-icons-png.flaticon.com/512/728/728068.png';
-      text.textContent='Modo Escuro';
-    }
   }
   const savedTheme=localStorage.getItem('genshin_theme')||'dark';
   applyTheme(savedTheme);
