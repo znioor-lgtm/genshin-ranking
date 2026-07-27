@@ -293,12 +293,10 @@ function parseBanners(html) {
   function extractBannersFromTable($table) {
     const rows = $table.find('tr');
     if (rows.length < 2) return [];
-    // Skip header-only tables (Character/Weapon Rate-Ups etc.)
     const headerText = $(rows[0]).text().trim().toLowerCase();
     if (headerText.includes('rate-up')) return [];
 
     const banners = [];
-    // Row 0 is header (e.g. "Phase 1 Banners"), rows 1+ are individual banners
     for (let r = 1; r < rows.length; r++) {
       const row = $(rows[r]);
       const cells = row.find('td');
@@ -326,7 +324,6 @@ function parseBanners(html) {
         if (txt === '5 Star Rate-Up:') rarity = 5;
         else if (txt === '4 Star Rate-Up:') rarity = 4;
         if (!rarity) return;
-        // Find all links from this <b> until the next <b>
         let $next = $b.next();
         while ($next.length) {
           if ($next.is('b')) break;
@@ -361,15 +358,30 @@ function parseBanners(html) {
     return tables;
   }
 
+  const allBanners = [];
   const currentTables = getTablesBetween('hl_2', 'hl_3');
   currentTables.forEach(t => {
-    extractBannersFromTable(t).forEach(b => result.current.push(b));
+    extractBannersFromTable(t).forEach(b => allBanners.push(b));
   });
-
   const nextTables = getTablesBetween('hl_3', 'hl_4');
   nextTables.forEach(t => {
-    extractBannersFromTable(t).forEach(b => result.next.push(b));
+    extractBannersFromTable(t).forEach(b => allBanners.push(b));
   });
+
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+
+  for (const b of allBanners) {
+    if (!b.date || !b.date.includes('-')) { result.current.push(b); continue; }
+    const parts = b.date.split(/\s*-\s*/);
+    const start = new Date(parts[0].trim());
+    const end = new Date(parts[1].trim());
+    end.setHours(23, 59, 59, 999);
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) { result.current.push(b); continue; }
+    if (now > end) continue;
+    if (now >= start && now <= end) result.current.push(b);
+    else if (now < start) result.next.push(b);
+  }
 
   return result;
 }
