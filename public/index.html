@@ -584,6 +584,12 @@ body{
 
 <script>
 (function(){
+  const PROFILES=['jussi','erii'];
+  const PROFILE_LABEL={jussi:'Jussi',erii:'Erii'};
+  const PROFILE_KEY='genshin_profile';
+  let currentProfile=sessionStorage.getItem(PROFILE_KEY)||'jussi';
+  function storageKey(){return 'genshin_dps_v4_'+currentProfile;}
+
   const PASSWORD_KEY='genshin_pass';
   function getPassword(){return sessionStorage.getItem(PASSWORD_KEY)}
   function setPassword(p){sessionStorage.setItem(PASSWORD_KEY,p)}
@@ -639,12 +645,6 @@ body{
     loginStepProfile.style.display='';
     loginOverlay.classList.remove('hidden');
   }
-
-  const PROFILES=['jussi','erii'];
-  const PROFILE_LABEL={jussi:'Jussi',erii:'Erii'};
-  const PROFILE_KEY='genshin_profile';
-  let currentProfile=sessionStorage.getItem(PROFILE_KEY)||'jussi';
-  function storageKey(){return 'genshin_dps_v4_'+currentProfile;}
 
   const CHARS = [
     ["Aino","aino","Hydro","Claymore",5],["Albedo","albedo","Geo","Sword",5],
