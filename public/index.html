@@ -300,6 +300,8 @@ body{
 .profile-tag.jussi{background:rgba(74,222,128,.1);color:var(--green);border:1px solid rgba(74,222,128,.2)}
 .profile-tag.erii{background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.2)}
 .empty-chart{text-align:center;padding:32px 16px;color:var(--text3);font-size:.78rem}
+.spinner{width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto}
+@keyframes spin{to{transform:rotate(360deg)}}
 
 /* Wishlist */
 .wish-priority{font-size:.6rem;font-weight:600;padding:2px 8px;border-radius:8px;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
@@ -1113,6 +1115,7 @@ body{
   }
 
   async function renderCharts(){
+    chartsContent.innerHTML='<div class="chart-card full" style="text-align:center;padding:40px"><div class="spinner"></div><p style="color:var(--text3);margin-top:12px;font-size:.78rem">Carregando gráficos...</p></div>';
     const [jussiData,eriiData]=await Promise.all([fetchProfileData('jussi'),fetchProfileData('erii')]);
     const allData={jussi:jussiData,erii:eriiData};
     const active=currentProfile;
