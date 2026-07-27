@@ -207,7 +207,8 @@ body{
   cursor:pointer;transition:all .2s;font-family:var(--font);
 }
 .profile-choice:hover{border-color:var(--gold);transform:translateY(-2px);box-shadow:0 4px 16px rgba(154,123,32,.2)}
-.profile-choice .avatar-dot{width:40px;height:40px;border-radius:50%;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1rem}
+.profile-choice .avatar-dot{width:48px;height:48px;border-radius:50%;background:var(--bg3);overflow:hidden;border:2px solid var(--border);display:flex;align-items:center;justify-content:center}
+.profile-choice .avatar-dot img{width:100%;height:100%;object-fit:cover;border-radius:50%}
 .profile-choice .name{font-size:.85rem;font-weight:700;color:var(--text)}
 
 /* Sidebar */
@@ -256,8 +257,9 @@ body{
 .profile-btn .avatar-dot{
   width:22px;height:22px;border-radius:50%;background:var(--bg3);
   display:flex;align-items:center;justify-content:center;
-  font-size:.55rem;font-weight:700;flex-shrink:0;border:1px solid var(--border);
+  font-size:.55rem;font-weight:700;flex-shrink:0;border:1px solid var(--border);overflow:hidden
 }
+.profile-btn .avatar-dot img{width:100%;height:100%;object-fit:cover;border-radius:50%}
 .profile-btn .uid{font-size:.6rem;color:var(--text3);margin-left:auto;white-space:nowrap}
 .profile-btn.active .uid{color:var(--text2)}
 .profile-btn.active .avatar-dot{border-color:var(--gold)}
@@ -415,12 +417,12 @@ body{
   <div class="sidebar-section">
     <div class="sec-label">Perfil</div>
     <button class="profile-btn active" data-profile="jussi">
-      <span class="avatar-dot">J</span>
+      <span class="avatar-dot"><img src="https://i.pinimg.com/736x/a9/18/cb/a918cb91a259a478ae9522aa0083a765.jpg" alt="Jussi"></span>
       <span>Jussi</span>
       <span class="uid">UID: 617781814</span>
     </button>
     <button class="profile-btn" data-profile="erii">
-      <span class="avatar-dot">E</span>
+      <span class="avatar-dot"><img src="https://i.pinimg.com/736x/2b/d3/08/2bd30889a09023d2877dccb585830259.jpg" alt="Erii"></span>
       <span>Erii</span>
       <span class="uid">UID: 638653766</span>
     </button>
@@ -570,11 +572,11 @@ body{
       <p>Quem é você?</p>
       <div class="profile-select">
         <button class="profile-choice" data-profile="jussi">
-          <span class="avatar-dot">J</span>
+          <span class="avatar-dot"><img src="https://i.pinimg.com/736x/a9/18/cb/a918cb91a259a478ae9522aa0083a765.jpg" alt="Jussi"></span>
           <span class="name">Jussi</span>
         </button>
         <button class="profile-choice" data-profile="erii">
-          <span class="avatar-dot" style="background:var(--red)">E</span>
+          <span class="avatar-dot"><img src="https://i.pinimg.com/736x/2b/d3/08/2bd30889a09023d2877dccb585830259.jpg" alt="Erii"></span>
           <span class="name">Erii</span>
         </button>
       </div>
