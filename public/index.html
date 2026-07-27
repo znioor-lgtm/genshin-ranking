@@ -1093,8 +1093,15 @@ body{
   async function fetchProfileData(profile){
     try{
       const r=await fetch('/api/ranking?profile='+profile,{headers:authHeaders()});
-      if(!r.ok)return[];
-      return await r.json();
+      if(r.ok){
+        const d=await r.json();
+        if(Array.isArray(d)&&d.length)return d;
+      }
+    }catch{}
+    try{
+      const raw=localStorage.getItem('genshin_dps_v4_'+profile);
+      const d=raw?JSON.parse(raw):[];
+      return Array.isArray(d)?d:[];
     }catch{return[]}
   }
 
