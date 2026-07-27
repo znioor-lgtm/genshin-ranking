@@ -199,6 +199,16 @@ body{
 .login-box .login-btn:active{transform:scale(.97)}
 .login-box .login-error{color:var(--red);font-size:.75rem;margin-top:8px;display:none}
 .login-box .login-error.show{display:block}
+.profile-select{display:flex;gap:16px;justify-content:center;margin-top:8px}
+.profile-choice{
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+  padding:20px 28px;border-radius:var(--r-sm);
+  background:var(--bg);border:2px solid var(--border);
+  cursor:pointer;transition:all .2s;font-family:var(--font);
+}
+.profile-choice:hover{border-color:var(--gold);transform:translateY(-2px);box-shadow:0 4px 16px rgba(154,123,32,.2)}
+.profile-choice .avatar-dot{width:40px;height:40px;border-radius:50%;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1rem}
+.profile-choice .name{font-size:.85rem;font-weight:700;color:var(--text)}
 
 /* Sidebar */
 .sidebar{
@@ -547,13 +557,28 @@ body{
 <div class="login-overlay" id="loginOverlay">
   <div class="login-box">
     <h1>✦ GenshinRank</h1>
-    <p>Digite a senha para acessar</p>
-    <div class="form-group">
-      <label>Senha</label>
-      <input type="password" id="loginPassword" placeholder="••••••••" autofocus>
+    <div id="loginStepPass">
+      <p>Digite a senha para acessar</p>
+      <div class="form-group">
+        <label>Senha</label>
+        <input type="password" id="loginPassword" placeholder="••••••••" autofocus>
+      </div>
+      <button class="login-btn" id="loginBtn">Entrar</button>
+      <div class="login-error" id="loginError">Senha incorreta</div>
     </div>
-    <button class="login-btn" id="loginBtn">Entrar</button>
-    <div class="login-error" id="loginError">Senha incorreta</div>
+    <div id="loginStepProfile" style="display:none">
+      <p>Quem é você?</p>
+      <div class="profile-select">
+        <button class="profile-choice" data-profile="jussi">
+          <span class="avatar-dot">J</span>
+          <span class="name">Jussi</span>
+        </button>
+        <button class="profile-choice" data-profile="erii">
+          <span class="avatar-dot" style="background:var(--red)">E</span>
+          <span class="name">Erii</span>
+        </button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -568,26 +593,57 @@ body{
   const loginPassword=document.getElementById('loginPassword');
   const loginBtn=document.getElementById('loginBtn');
   const loginError=document.getElementById('loginError');
+  const loginStepPass=document.getElementById('loginStepPass');
+  const loginStepProfile=document.getElementById('loginStepProfile');
 
   async function tryLogin(password){
     try{
       const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password})});
       const d=await r.json();
-      if(d.ok){setPassword(password);loginOverlay.classList.add('hidden');return true}
+      if(d.ok){
+        setPassword(password);
+        loginStepPass.style.display='none';
+        loginStepProfile.style.display='';
+        return true;
+      }
       loginError.classList.add('show');return false
     }catch{loginError.textContent='Erro de conexão';loginError.classList.add('show');return false}
+  }
+
+  function selectProfile(profile){
+    currentProfile=profile;
+    sessionStorage.setItem(PROFILE_KEY,profile);
+    document.querySelectorAll('.profile-btn').forEach(b=>{
+      b.classList.toggle('active',b.dataset.profile===profile);
+    });
+    state.ranking=loadRanking();
+    wishState.list=loadWishlistLocal();
+    renderRanking();
+    syncFromServer();
+    renderWishlist();
+    syncWishlistFromServer();
+    loginOverlay.classList.add('hidden');
   }
 
   loginBtn.addEventListener('click',()=>{const p=loginPassword.value;if(p)tryLogin(p)});
   loginPassword.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();loginBtn.click()}});
 
+  document.querySelectorAll('.profile-choice').forEach(btn=>{
+    btn.addEventListener('click',()=>selectProfile(btn.dataset.profile));
+  });
+
   if(!getPassword()){
+    loginOverlay.classList.remove('hidden');
+  }else if(!sessionStorage.getItem(PROFILE_KEY)){
+    loginStepPass.style.display='none';
+    loginStepProfile.style.display='';
     loginOverlay.classList.remove('hidden');
   }
 
   const PROFILES=['jussi','erii'];
   const PROFILE_LABEL={jussi:'Jussi',erii:'Erii'};
-  let currentProfile='jussi';
+  const PROFILE_KEY='genshin_profile';
+  let currentProfile=sessionStorage.getItem(PROFILE_KEY)||'jussi';
   function storageKey(){return 'genshin_dps_v4_'+currentProfile;}
 
   const CHARS = [
@@ -953,6 +1009,7 @@ body{
     if(profile===currentProfile)return;
     await saveRanking();
     currentProfile=profile;
+    sessionStorage.setItem(PROFILE_KEY,profile);
     state.ranking=loadRanking();
     wishState.list=loadWishlistLocal();
     renderRanking();
@@ -1479,6 +1536,10 @@ body{
   renderWishlist();
   syncWishlistFromServer();
   setInterval(()=>{if(!document.hidden){syncWishlistFromServer()}},30000);
+
+  document.querySelectorAll('.profile-btn').forEach(b=>{
+    b.classList.toggle('active',b.dataset.profile===currentProfile);
+  });
 
   state.ranking=loadRanking();
   renderRanking();
