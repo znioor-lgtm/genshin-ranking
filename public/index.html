@@ -267,7 +267,8 @@ body{
   font-family:var(--font);cursor:pointer;transition:all .2s;margin-bottom:4px;
 }
 .data-btn:hover{background:var(--card);color:var(--text)}
-.data-btn .data-icon{font-size:1rem;width:22px;text-align:center;flex-shrink:0}
+.data-btn .data-icon{width:22px;height:22px;text-align:center;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.data-btn .data-icon img{width:20px;height:20px;vertical-align:middle;display:block}
 .data-btn.export:hover{border-color:var(--green);color:var(--green)}
 .data-btn.import:hover{border-color:var(--gold);color:var(--gold)}
 #importFile{display:none}
